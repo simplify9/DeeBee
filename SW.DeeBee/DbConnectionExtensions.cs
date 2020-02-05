@@ -78,13 +78,6 @@ namespace SW.DeeBee
             await command.ExecuteNonQueryAsync();
         }
 
-        //async public static Task<IEnumerable<TEntity>> SelectAll<TEntity>(this DbConnection connection) where TEntity : new()
-        //{
-        //    //var command = connection.CreateCommandObject();
-        //    //command.CommandText = BuildSelect<TEntity>();
-        //    return await SelectAll<TEntity>;
-        //}
-
         async static public Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, SearchyCondition searchyCondition = null, params SearchySort[] sorts) where TEntity : new()
         {
             var entityType = typeof(TEntity);
@@ -191,6 +184,30 @@ namespace SW.DeeBee
             return await (await command.ExecuteReaderAsync()).BindReaderToEntity<TEntity>();
         }
 
+        async public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string queryText) where TEntity : new()
+        {
+            var command = connection.CreateCommandObject();
+
+            command.CommandText = queryText;
+
+            var reader = await command.ExecuteReaderAsync();
+
+            return await BindReaderToEntity<TEntity>(reader);
+        }
+        public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string field, object value, SearchyRule rule = SearchyRule.EqualsTo) where TEntity : new()
+        {
+            return connection.All<TEntity>(new SearchyCondition(field, rule, value));
+        }
+        async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
+        {
+            var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
+
+            string selectStatement = $"{BuildSelect<TEntity>()} WHERE {identityColumn}=@{identityColumn}";
+            var command = connection.CreateCommandObject();
+            command.CommandText = selectStatement;
+            command.AddCommandParameter(identityColumn, key);
+            return (await BindReaderToEntity<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
+        }
         private static string BuildSelect<TEntity>()
         {
             var entityType = typeof(TEntity);
@@ -202,18 +219,6 @@ namespace SW.DeeBee
 
             return $"SELECT {fields.Remove(fields.Length - 1)} FROM {GetTableInfo(entityType).TableName} ";
         }
-
-        async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
-        {
-            var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
-
-            string selectStatement = $"{BuildSelect<TEntity>()} WHERE {identityColumn}=@{identityColumn}";
-            var command = connection.CreateCommandObject();
-            command.CommandText = selectStatement;
-            command.AddCommandParameter(identityColumn, key);
-            return (await BindReaderToEntity<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
-        }
-
         private static Table GetTableInfo(Type entityType)
         {
             var tableInfo = entityType.GetCustomAttribute<Table>();

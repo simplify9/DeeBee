@@ -12,5 +12,6 @@ namespace SW.DeeBee.UnitTests.Entities
         public string Description { get; set; }
         public string Entity { get; set; }
         public bool  Closed { get; set; }
+        public DateTime? SampleDate { get; set; }
     }
 }

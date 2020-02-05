@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 using SW.DeeBee.UnitTests.Entities;
 using SW.PrimitiveTypes;
+using System;
 using System.Threading.Tasks;
 
 namespace SW.DeeBee.UnitTests
@@ -16,8 +17,21 @@ namespace SW.DeeBee.UnitTests
             {
                 Number = "z123",
                 Description = "test bag",
-                Entity = "XYZ"
+                Entity = "XYZ",
+                SampleDate = DateTime.UtcNow
             };
+
+            using (var connectionManager = new ConnectionHost(new DeeBeeOptions()
+            {
+                Provider = typeof(MySqlConnection),
+                ConntectionString = "Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"
+                //ConnectionFactory = () => new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;")
+            }))
+            {
+
+
+            };
+
 
             using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"))
             {
@@ -28,7 +42,7 @@ namespace SW.DeeBee.UnitTests
 
                 await connection.Update(bag);
                 var bags = await connection.All<Bag>();
-                var bag1 = await connection.One<Bag>(1);
+                var bag1 = await connection.One<Bag>(20);
 
                 var condition = new SearchyCondition();
 
@@ -36,7 +50,7 @@ namespace SW.DeeBee.UnitTests
                 condition.Filters.Add(new SearchyFilter("Description", SearchyRule.StartsWith, "f"));
 
 
-                var selectedBags = await connection.All<Bag>(condition); 
+                var selectedBags = await connection.All<Bag>(condition);
             }
         }
     }
