@@ -12,7 +12,7 @@ namespace SW.DeeBee
 {
     public static class DbConnectionExtensions
     {
-        async public static Task Add<TEntity>(this DbConnection connection, TEntity entity)
+        async public static Task Add<TEntity>(this DbConnection connection, TEntity entity, DbTransaction transaction = null)
         {
             var entityType = typeof(TEntity);
             var properties = entityType.GetProperties();
@@ -37,6 +37,8 @@ namespace SW.DeeBee
             string insertStatement = $"INSERT INTO {tableInfo.TableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(tableInfo.ServerSideIdentity ? ";" + IdentityCommand : "")}";
 
             command.CommandText = insertStatement;
+            if (transaction != null)
+                command.Transaction = transaction;
 
             if (tableInfo.ServerSideIdentity)
             {
@@ -45,9 +47,11 @@ namespace SW.DeeBee
             }
             else
                 await command.ExecuteNonQueryAsync();
+
+
         }
 
-        async public static Task Update<TEntity>(this DbConnection connection, TEntity entity)
+        async public static Task Update<TEntity>(this DbConnection connection, TEntity entity, DbTransaction transaction = null)
         {
             var entityType = typeof(TEntity);
             var properties = entityType.GetProperties();
@@ -75,6 +79,10 @@ namespace SW.DeeBee
 
             string updateStatement = $"UPDATE {tableInfo.TableName} SET {fields.ToString().Remove(fields.ToString().Length - 2)} WHERE {idColumn}=@{idColumn}";
             command.CommandText = updateStatement;
+
+            if (transaction != null)
+                command.Transaction = transaction;
+
             await command.ExecuteNonQueryAsync();
         }
 
