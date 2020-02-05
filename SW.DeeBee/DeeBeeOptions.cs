@@ -11,6 +11,7 @@ namespace SW.DeeBee
         public DeeBeeOptions()
         {
             IsolationLevel = IsolationLevel.ReadCommitted;
+            CommandTimeout = 30;
         }
 
         //public Func<DbConnection> ConnectionFactory { get; set; }
@@ -18,5 +19,6 @@ namespace SW.DeeBee
         public string ConntectionString { get; set; }
         public bool Trasnaction { get; set; }
         public IsolationLevel IsolationLevel { get; set; }
+        public int CommandTimeout { get; set; }
     }
 }
