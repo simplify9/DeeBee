@@ -8,6 +8,11 @@ namespace SW.DeeBee
 {
     public class DeeBeeOptions
     {
+        public DeeBeeOptions()
+        {
+            IsolationLevel = IsolationLevel.ReadCommitted;
+        }
+
         //public Func<DbConnection> ConnectionFactory { get; set; }
         public Type Provider { get; set; }
         public string ConntectionString { get; set; }

@@ -11,6 +11,7 @@ namespace SW.DeeBee
     public class ConnectionHost : IDisposable
     {
         private readonly DeeBeeOptions deeBeeOptions;
+        private DbTransaction transaction = null;
 
         public ConnectionHost(DeeBeeOptions deeBeeOptions)
         {
@@ -24,13 +25,13 @@ namespace SW.DeeBee
         async public Task Add<TEntity>(TEntity entity)
         {
             await OpenConnection();
-            await Connection.Add(entity);
+            await Connection.Add(entity, transaction);
         }
 
         async public Task Update<TEntity>(TEntity entity)
         {
             await OpenConnection();
-            await Connection.Update(entity);
+            await Connection.Update(entity, transaction);
         }
 
         async public Task<IEnumerable<TEntity>> All<TEntity>(SearchyCondition searchyCondition = null, params SearchySort[] sorts) where TEntity : new()
@@ -61,11 +62,8 @@ namespace SW.DeeBee
             { 
                 await Connection.OpenAsync();
                 if (deeBeeOptions.Trasnaction)
-                    await Connection.BeginTransactionAsync(deeBeeOptions.IsolationLevel);
-            
+                    transaction = await Connection.BeginTransactionAsync(deeBeeOptions.IsolationLevel);
             }
-                
-                
         }
 
         public void Dispose()
