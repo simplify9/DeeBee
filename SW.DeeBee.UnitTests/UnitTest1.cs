@@ -15,7 +15,7 @@ namespace SW.DeeBee.UnitTests
         {
             var bag = new Bag
             {
-                Number = "z123",
+                Number ="65456456",
                 Description = "test bag",
                 Entity = "XYZ",
                 SampleDate = DateTime.UtcNow
