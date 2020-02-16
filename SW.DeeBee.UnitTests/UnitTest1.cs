@@ -21,16 +21,15 @@ namespace SW.DeeBee.UnitTests
                 SampleDate = DateTime.UtcNow
             };
 
-            using (var  connectionHost = new ConnectionHost(new DeeBeeOptions()
-            {
-                Provider = typeof(MySqlConnection),
-                ConntectionString = "Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"
-                //ConnectionFactory = () => new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;")
-            }))
-            {
-                var bb = await connectionHost.All<Bag>();
+            //using (var  connectionHost = new ConnectionHost(new DeeBeeOptions()
+            //{
+            //    Provider = typeof(MySqlConnection),
+            //    ConntectionString = "Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"
+            //    //ConnectionFactory = () => new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;")
+            //}))
+            //{
 
-            };
+            //};
 
 
             using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"))

@@ -79,12 +79,18 @@ namespace SW.DeeBee
             await command.ExecuteNonQueryAsync();
         }
 
-        async static public Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, SearchyCondition searchyCondition = null, params SearchySort[] sorts) where TEntity : new()
+        static public Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, SearchyCondition condition) where TEntity : new()
+        {
+            return connection.All<TEntity>(new SearchyCondition[] { condition });
+        }
+
+        async static public Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null, IEnumerable<SearchySort> sorts = null, int pageSize = 0, int pageIndex = 0) where TEntity : new()
         {
             var entityType = typeof(TEntity);
             var command = connection.CreateCommandObject();
             string where = "";
             string orderBy = "";
+            var searchyCondition = conditions?.FirstOrDefault();
 
             if (searchyCondition != null && searchyCondition.Filters.Count > 0)
             {
@@ -169,7 +175,7 @@ namespace SW.DeeBee
                 where = where.Remove(where.Length - 5);
             }
 
-            if (sorts.Length > 0)
+            if (sorts?.Count() > 0)
             {
                 orderBy = " ORDER BY ";
                 foreach (var sort in sorts)
@@ -179,6 +185,11 @@ namespace SW.DeeBee
             }
 
             string selectStatement = $"{BuildSelect<TEntity>()} {where} {orderBy}";
+
+            if (pageSize > 0)
+
+                selectStatement = $"{selectStatement} LIMIT {pageIndex * pageSize}, {pageSize}";
+
 
             command.CommandText = selectStatement;
 
@@ -195,7 +206,7 @@ namespace SW.DeeBee
         }
         public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string field, object value, SearchyRule rule = SearchyRule.EqualsTo) where TEntity : new()
         {
-            return connection.All<TEntity>(new SearchyCondition(field, rule, value));
+            return connection.All<TEntity>(new SearchyCondition[] { new SearchyCondition(field, rule, value) });
         }
         async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
         {

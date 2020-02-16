@@ -34,10 +34,15 @@ namespace SW.DeeBee
             await Connection.Update(entity, transaction);
         }
 
-        async public Task<IEnumerable<TEntity>> All<TEntity>(SearchyCondition searchyCondition = null, params SearchySort[] sorts) where TEntity : new()
+        public Task<IEnumerable<TEntity>> All<TEntity>(SearchyCondition condition) where TEntity : new()
+        {
+            return Connection.All<TEntity>(new SearchyCondition[] { condition });
+        }
+
+        async public Task<IEnumerable<TEntity>> All<TEntity>(IEnumerable<SearchyCondition> conditions = null, IEnumerable<SearchySort> sorts = null, int pageSize = 0, int pageIndex = 0) where TEntity : new()
         {
             await OpenConnection();
-            return await Connection.All<TEntity>(searchyCondition, sorts);
+            return await Connection.All<TEntity>(conditions , sorts, pageSize, pageIndex);
         }
 
         async public Task<IEnumerable<TEntity>> All<TEntity>(string queryText) where TEntity : new()
