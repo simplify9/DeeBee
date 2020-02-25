@@ -230,7 +230,7 @@ namespace SW.DeeBee
 
                 for (var propertyIndex = 0; propertyIndex < properties.Length; propertyIndex++)
                 {
-                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnNameEscaped;
+                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnName;
 
                     if (columnName.Equals(reader.GetName(fieldIndex), StringComparison.OrdinalIgnoreCase))
                     {
