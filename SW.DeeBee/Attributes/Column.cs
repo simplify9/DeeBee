@@ -11,6 +11,8 @@ namespace SW.DeeBee
         }
 
         public string ColumnName { get; set; }
+
+        public string ColumnNameEscaped => @$"""{ColumnName}""";
     }
 }
 

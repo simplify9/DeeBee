@@ -26,7 +26,7 @@ namespace SW.DeeBee
 
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase) || !tableInfo.ServerSideIdentity)
                 {
-                    var column = GetColumnInfo(property).ColumnName;
+                    var column = GetColumnInfo(property).ColumnNameEscaped;
                     fields.Append(column + ", ");
                     parameters.Append("@" + column + ", ");
                     command.AddCommandParameter(column, property.GetValue(entity));
@@ -61,14 +61,14 @@ namespace SW.DeeBee
             {
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase))
                 {
-                    string column = GetColumnInfo(property).ColumnName;
+                    string column = GetColumnInfo(property).ColumnNameEscaped;
                     fields.Append(column + "= " + "@" + column + ", ");
                     command.AddCommandParameter(column, property.GetValue(entity));
                 }
                 else
                 {
                     idProperty = property;
-                    idColumn = GetColumnInfo(idProperty).ColumnName;
+                    idColumn = GetColumnInfo(idProperty).ColumnNameEscaped;
                     command.AddCommandParameter(idColumn, property.GetValue(entity));
                 }
             }
@@ -86,11 +86,181 @@ namespace SW.DeeBee
 
         async static public Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null, IEnumerable<SearchySort> sorts = null, int pageSize = 0, int pageIndex = 0) where TEntity : new()
         {
-            var entityType = typeof(TEntity);
             var command = connection.CreateCommandObject();
             string where = "";
             string orderBy = "";
+
+            where = FilterCondition<TEntity>(command, conditions);
+
+            if (sorts?.Count() > 0)
+            {
+                orderBy = " ORDER BY ";
+                foreach (var sort in sorts)
+                    if (sort.Sort == SearchySortOrder.DEC)
+                        orderBy += string.Format(" {0} {1},", sort.Field, "DESC");
+                    else
+                        orderBy += string.Format(" {0},", sort.Field);
+                orderBy = orderBy.Remove(orderBy.Length - 1);
+            }
+
+            string selectStatement = $"{BuildSelect<TEntity>()} {where} {orderBy}";
+
+            if (pageSize > 0)
+
+                selectStatement = $"{selectStatement} LIMIT {pageIndex * pageSize}, {pageSize}";
+
+
+            command.CommandText = selectStatement;
+
+            return await (await command.ExecuteReaderAsync()).BindReader<TEntity>();
+        }
+
+        async public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string queryText) where TEntity : new()
+        {
+            var command = connection.CreateCommandObject();
+
+            command.CommandText = queryText;
+
+            return await BindReader<TEntity>(await command.ExecuteReaderAsync());
+        }
+        public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string field, object value, SearchyRule rule = SearchyRule.EqualsTo) where TEntity : new()
+        {
+            return connection.All<TEntity>(new SearchyCondition[] { new SearchyCondition(field, rule, value) });
+        }
+
+        async static public Task<int> Count<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
+        {
+            var command = connection.CreateCommandObject();
+            string where = "";
+            string orderBy = "";
+
+            where = FilterCondition<TEntity>(command, conditions);
+
+
+            string selectStatement = $"SELECT COUNT(*) FROM {GetTableInfo(typeof(TEntity)).TableName} {where} {orderBy}";
+
+
+            command.CommandText = selectStatement;
+
+            var result = await command.ExecuteScalarAsync();
+
+            return Convert.ToInt32(result);
+        }
+
+        async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
+        {
+            var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
+
+            string selectStatement = $"{BuildSelect<TEntity>()} WHERE {identityColumn}=@{identityColumn}";
+            var command = connection.CreateCommandObject();
+            command.CommandText = selectStatement;
+            command.AddCommandParameter(identityColumn, key);
+            return (await BindReader<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
+        }
+        private static string BuildSelect<TEntity>()
+        {
+            var entityType = typeof(TEntity);
+            string fields = "";
+
+            foreach (var property in entityType.GetProperties())
+
+                fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped},";
+
+            return $"SELECT {fields.Remove(fields.Length - 1)} FROM {GetTableInfo(entityType).TableName} ";
+        }
+
+
+        private static Table GetTableInfo(Type entityType)
+        {
+            var tableInfo = entityType.GetCustomAttribute<Table>();
+            return tableInfo ?? new Table(entityType.Name);
+        }
+
+        private static Column GetColumnInfo(PropertyInfo propertyInfo)
+        {
+            var columnInfo = propertyInfo.GetCustomAttribute<Column>();
+            return columnInfo ?? new Column(propertyInfo.Name);
+        }
+
+        private static Column GetColumnInfo(Type entityType, string propertyName)
+        {
+            return GetColumnInfo(entityType.GetProperty(propertyName));
+        }
+
+        private static DbCommand CreateCommandObject(this DbConnection connection, DbTransaction transaction = null)
+        {
+            var command = connection.CreateCommand();
+
+            if (transaction != null)
+                command.Transaction = transaction;
+            //command.CommandTimeout = 0;
+
+            return command;
+        }
+
+        private static IDbDataParameter AddCommandParameter(this IDbCommand command, string parameterName, object parameterValue = null)
+        {
+            IDbDataParameter parameter = command.CreateParameter();
+
+            parameter.Direction = ParameterDirection.Input;
+            parameter.ParameterName = "@" + parameterName;
+            parameter.Value = parameterValue ?? DBNull.Value;
+
+            command.Parameters.Add(parameter);
+
+            return parameter;
+        }
+
+        //private static IDataParameter CreateParameterObject(IDbCommand command)
+        //{
+        //    return command.CreateParameter();
+        //}
+
+        async private static Task<IEnumerable<TEntity>> BindReader<TEntity>(this DbDataReader reader) where TEntity : new()
+        {
+            var properties = typeof(TEntity).GetProperties();
+            var list = new List<TEntity>();
+
+            var propertyMapper = new Dictionary<int, int>();
+
+            for (var fieldIndex = 0; fieldIndex < reader.FieldCount; fieldIndex++)
+
+                for (var propertyIndex = 0; propertyIndex < properties.Length; propertyIndex++)
+                {
+                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnNameEscaped;
+
+                    if (columnName.Equals(reader.GetName(fieldIndex), StringComparison.OrdinalIgnoreCase))
+                    {
+                        propertyMapper.Add(fieldIndex, propertyIndex);
+                        break;
+                    }
+                }
+
+
+            while (await reader.ReadAsync())
+            {
+                var entity = new TEntity();
+
+                for (var index = 0; index < reader.FieldCount; index++)
+                {
+                    if (!reader.IsDBNull(index) && propertyMapper.TryGetValue(index, out int propertyIndex))
+                        properties[propertyIndex].SetValue(entity, reader[index], null);
+                }
+
+                list.Add(entity);
+            }
+
+            reader.Close();
+            return list;
+        }
+
+        private static string FilterCondition<TEntity>(DbCommand command, IEnumerable<SearchyCondition> conditions = null)
+        {
+
+
+            var entityType = typeof(TEntity);
             var searchyCondition = conditions?.FirstOrDefault();
+            string where = "";
 
             if (searchyCondition != null && searchyCondition.Filters.Count > 0)
             {
@@ -173,144 +343,12 @@ namespace SW.DeeBee
                 }
 
                 where = where.Remove(where.Length - 5);
+
             }
 
-            if (sorts?.Count() > 0)
-            {
-                orderBy = " ORDER BY ";
-                foreach (var sort in sorts)
-                    orderBy += string.Format(" {0} {1},", sort.Field, sort.Sort.ToString());
-
-                orderBy = orderBy.Remove(orderBy.Length - 1);
-            }
-
-            string selectStatement = $"{BuildSelect<TEntity>()} {where} {orderBy}";
-
-            if (pageSize > 0)
-
-                selectStatement = $"{selectStatement} LIMIT {pageIndex * pageSize}, {pageSize}";
+            return where;
 
 
-            command.CommandText = selectStatement;
-
-            return await (await command.ExecuteReaderAsync()).BindReader<TEntity>();
-        }
-
-        async public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string queryText) where TEntity : new()
-        {
-            var command = connection.CreateCommandObject();
-
-            command.CommandText = queryText;
-
-            return await BindReader<TEntity>(await command.ExecuteReaderAsync());
-        }
-        public static Task<IEnumerable<TEntity>> All<TEntity>(this DbConnection connection, string field, object value, SearchyRule rule = SearchyRule.EqualsTo) where TEntity : new()
-        {
-            return connection.All<TEntity>(new SearchyCondition[] { new SearchyCondition(field, rule, value) });
-        }
-        async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
-        {
-            var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
-
-            string selectStatement = $"{BuildSelect<TEntity>()} WHERE {identityColumn}=@{identityColumn}";
-            var command = connection.CreateCommandObject();
-            command.CommandText = selectStatement;
-            command.AddCommandParameter(identityColumn, key);
-            return (await BindReader<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
-        }
-        private static string BuildSelect<TEntity>()
-        {
-            var entityType = typeof(TEntity);
-            string fields = "";
-
-            foreach (var property in entityType.GetProperties())
-
-                fields = $"{fields}{GetColumnInfo(property).ColumnName},";
-
-            return $"SELECT {fields.Remove(fields.Length - 1)} FROM {GetTableInfo(entityType).TableName} ";
-        }
-        private static Table GetTableInfo(Type entityType)
-        {
-            var tableInfo = entityType.GetCustomAttribute<Table>();
-            return tableInfo ?? new Table(entityType.Name);
-        }
-
-        private static Column GetColumnInfo(PropertyInfo propertyInfo)
-        {
-            var columnInfo = propertyInfo.GetCustomAttribute<Column>();
-            return columnInfo ?? new Column(propertyInfo.Name);
-        }
-
-        private static Column GetColumnInfo(Type entityType, string propertyName)
-        {
-            return GetColumnInfo(entityType.GetProperty(propertyName));
-        }
-
-        private static DbCommand CreateCommandObject(this DbConnection connection, DbTransaction transaction = null)
-        {
-            var command = connection.CreateCommand();
-
-            if (transaction != null)
-                command.Transaction = transaction;
-            //command.CommandTimeout = 0;
-
-            return command;
-        }
-
-        private static IDbDataParameter AddCommandParameter(this IDbCommand command, string parameterName, object parameterValue = null)
-        {
-            IDbDataParameter parameter = command.CreateParameter();
-
-            parameter.Direction = ParameterDirection.Input;
-            parameter.ParameterName = "@" + parameterName;
-            parameter.Value = parameterValue ?? DBNull.Value;
-
-            command.Parameters.Add(parameter);
-
-            return parameter;
-        }
-
-        //private static IDataParameter CreateParameterObject(IDbCommand command)
-        //{
-        //    return command.CreateParameter();
-        //}
-
-        async private static Task<IEnumerable<TEntity>> BindReader<TEntity>(this DbDataReader reader) where TEntity : new()
-        {
-            var properties = typeof(TEntity).GetProperties();
-            var list = new List<TEntity>();
-
-            var propertyMapper = new Dictionary<int, int>();
-
-            for (var fieldIndex = 0; fieldIndex < reader.FieldCount; fieldIndex++)
-
-                for (var propertyIndex = 0; propertyIndex < properties.Length; propertyIndex++)
-                {
-                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnName;
-
-                    if (columnName.Equals(reader.GetName(fieldIndex), StringComparison.OrdinalIgnoreCase))
-                    {
-                        propertyMapper.Add(fieldIndex, propertyIndex);
-                        break;
-                    }
-                }
-
-
-            while (await reader.ReadAsync())
-            {
-                var entity = new TEntity();
-
-                for (var index = 0; index < reader.FieldCount; index++)
-                {
-                    if (!reader.IsDBNull(index) && propertyMapper.TryGetValue(index, out int propertyIndex))
-                        properties[propertyIndex].SetValue(entity, reader[index], null);
-                }
-
-                list.Add(entity);
-            }
-
-            reader.Close();
-            return list;
         }
 
         public static string IdentityCommand => "SELECT LAST_INSERT_ID();";
