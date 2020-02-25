@@ -26,7 +26,7 @@ namespace SW.DeeBee
 
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase) || !tableInfo.ServerSideIdentity)
                 {
-                    var column = GetColumnInfo(property).ColumnName;
+                    var column = GetColumnInfo(property).ColumnNameEscaped;
                     fields.Append(column + ", ");
                     parameters.Append("@" + column + ", ");
                     command.AddCommandParameter(column, property.GetValue(entity));
@@ -61,14 +61,14 @@ namespace SW.DeeBee
             {
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase))
                 {
-                    string column = GetColumnInfo(property).ColumnName;
+                    string column = GetColumnInfo(property).ColumnNameEscaped;
                     fields.Append(column + "= " + "@" + column + ", ");
                     command.AddCommandParameter(column, property.GetValue(entity));
                 }
                 else
                 {
                     idProperty = property;
-                    idColumn = GetColumnInfo(idProperty).ColumnName;
+                    idColumn = GetColumnInfo(idProperty).ColumnNameEscaped;
                     command.AddCommandParameter(idColumn, property.GetValue(entity));
                 }
             }
@@ -164,7 +164,7 @@ namespace SW.DeeBee
 
             foreach (var property in entityType.GetProperties())
 
-                fields = $"{fields}{GetColumnInfo(property).ColumnName},";
+                fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped},";
 
             return $"SELECT {fields.Remove(fields.Length - 1)} FROM {GetTableInfo(entityType).TableName} ";
         }
@@ -184,7 +184,10 @@ namespace SW.DeeBee
 
         private static Column GetColumnInfo(Type entityType, string propertyName)
         {
-            return GetColumnInfo(entityType.GetProperty(propertyName));
+            var property = entityType.GetProperty(propertyName);
+            if (property == null) throw new DeeBeeColumnNameException(propertyName);
+
+            return GetColumnInfo(property);
         }
 
         private static DbCommand CreateCommandObject(this DbConnection connection, DbTransaction transaction = null)
@@ -227,7 +230,7 @@ namespace SW.DeeBee
 
                 for (var propertyIndex = 0; propertyIndex < properties.Length; propertyIndex++)
                 {
-                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnName;
+                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnNameEscaped;
 
                     if (columnName.Equals(reader.GetName(fieldIndex), StringComparison.OrdinalIgnoreCase))
                     {
@@ -270,8 +273,9 @@ namespace SW.DeeBee
                 foreach (var filter in searchyCondition.Filters)
                 {
                     index += 1;
-                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnName;
-                    var parameter = command.AddCommandParameter(filterColName + index.ToString());
+                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnNameEscaped;
+                    var filterColumnParameter = GetColumnInfo(entityType, filter.Field).ColumnName;
+                    var parameter = command.AddCommandParameter(filterColumnParameter + index.ToString());
 
                     switch (filter.Rule)
                     {

@@ -25,9 +25,9 @@ namespace SW.DeeBee.UnitTests
                     new SearchyCondition() {
                         Filters = new List<SearchyFilter>() {
                             new SearchyFilter() {
-                                Field = "HAWB",
+                                Field = "Number",
                                 Rule = SearchyRule.Contains,
-                                ValueString = "_2014"
+                                ValueString = "65456456"
                             }
                         }
                     }
@@ -40,13 +40,36 @@ namespace SW.DeeBee.UnitTests
                     }
                 }
             };
-            //var bag = new Bag
-            //{
-            //    Number ="65456456",
-            //    Description = "test bag",
-            //    Entity = "XYZ",
-            //    SampleDate = DateTime.UtcNow
-            //};
+
+            var invalidReq = new SearchyRequest()
+            {
+                Conditions = new List<SearchyCondition>() {
+                    new SearchyCondition() {
+                        Filters = new List<SearchyFilter>() {
+                            new SearchyFilter() {
+                                Field = "NOTAVALIDFIELD",
+                                Rule = SearchyRule.Contains,
+                                ValueString = "65456456"
+                            }
+                        }
+                    }
+                },
+                PageIndex = 0,
+                PageSize = 12,
+                Sorts = new List<SearchySort>() {
+                    new SearchySort() {
+                        Field = "ID", Sort = SearchySortOrder.DEC
+                    }
+                }
+            };
+
+            var bag = new Bag
+            {
+                Number = "65456456",
+                Description = "test bag",
+                Entity = "XYZ",
+                SampleDate = DateTime.UtcNow
+            };
 
             //using (var  connectionHost = new ConnectionHost(new DeeBeeOptions()
             //{
@@ -59,15 +82,15 @@ namespace SW.DeeBee.UnitTests
             //};
 
 
-            using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=glnetclo;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
+            using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=dee_bee_tests;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
             {
                 await connection.OpenAsync();
-                //await connection.Add(bag);
+                await connection.Add(bag);
 
                 //bag.Description = "ttt";
 
                 //await connection.Update(bag);
-                var bags = await connection.All<LegacyParcel>(req.Conditions, req.Sorts, req.PageSize, req.PageIndex);
+                var bags = await connection.All<Bag>(req.Conditions, req.Sorts, req.PageSize, req.PageIndex);
                 //  var bag1 = await connection.One<LegacyParcel>(20);
 
                 //var condition = new SearchyCondition();
@@ -77,6 +100,22 @@ namespace SW.DeeBee.UnitTests
 
 
                 //var selectedBags = await connection.All<Bag>(condition);
+
+                var exceptionCatched = false;
+                try
+                {
+                    var data = await connection.All<Bag>(invalidReq.Conditions, invalidReq.Sorts, invalidReq.PageSize, invalidReq.PageIndex);
+                }
+                catch (DeeBeeColumnNameException )
+                {
+                    exceptionCatched = true;
+
+
+                }
+
+                Assert.IsTrue(exceptionCatched);
+
+                
             }
         }
     }
