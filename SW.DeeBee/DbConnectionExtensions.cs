@@ -184,7 +184,10 @@ namespace SW.DeeBee
 
         private static Column GetColumnInfo(Type entityType, string propertyName)
         {
-            return GetColumnInfo(entityType.GetProperty(propertyName));
+            var property = entityType.GetProperty(propertyName);
+            if (property == null) throw new DeeBeeColumnNameException(propertyName);
+
+            return GetColumnInfo(property);
         }
 
         private static DbCommand CreateCommandObject(this DbConnection connection, DbTransaction transaction = null)
@@ -270,105 +273,9 @@ namespace SW.DeeBee
                 foreach (var filter in searchyCondition.Filters)
                 {
                     index += 1;
-                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnName;
-                    var parameter = command.AddCommandParameter(filterColName + index.ToString());
-
-                    switch (filter.Rule)
-                    {
-                        case SearchyRule.EqualsTo:
-                            where = $"{where} ({filterColName}={parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.LessThan:
-                            where = $"{where} ({filterColName}<{parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.LessThanOrEquals:
-                            where = $"{where} ({filterColName}<={parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.GreaterThan:
-                            where = $"{where} ({filterColName}>{parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.GreaterThanOrEquals:
-                            where = $"{where} ({filterColName}>={parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.NotEqualsTo:
-                            where = $"{where} ({filterColName}<>{parameter.ParameterName}) AND ";
-                            parameter.Value = filter.Value;
-                            break;
-
-                        case SearchyRule.StartsWith:
-                            where = $"{where} ({filterColName} like {parameter.ParameterName}) AND ";
-                            parameter.Value = string.Concat(filter.Value, "%");
-                            break;
-
-                        case SearchyRule.Contains:
-                            where = $"{where} ({filterColName} like {parameter.ParameterName}) AND ";
-                            parameter.Value = string.Concat("%", filter.Value, "%");
-                            break;
-
-
-                            //case SearchyRule.EqualsToList:
-                            //    {
-                            //        var _ListType = _e.Value.GetType();
-                            //        var _ItemType = _ListType.GetGenericArguments();
-                            //        var _GenericListType = typeof(List<>);
-                            //        var _GenericList = _GenericListType.MakeGenericType(_ItemType);
-
-                            //        if (_GenericList != _ListType)
-                            //            throw new Exception(string.Format("The value for the filter {0} is not a generic list", _filtercolname));
-
-                            //        var _Values = new StringBuilder();
-                            //        if (_ItemType.Contains(Type.GetType("System.String")) || _ItemType.Contains(Type.GetType("System.Guid")))
-                            //        {
-                            //            foreach (var _Value in _e.Value)
-                            //                _Values.Append(string.Concat("'", _Value.ToString().Replace("'", "''"), "'", ","));
-                            //        }
-                            //        else
-                            //            foreach (var _Value in _e.Value)
-                            //                _Values.Append(string.Concat(_Value, ","));
-
-                            //        _whereclause = string.Format(_whereclause + " ({0} IN ({1})) AND ", _filtercolname, _Values.ToString().TrimEnd(new char[] { ',' }));
-                            //        break;
-                            //    }
-                    }
-                }
-
-                where = where.Remove(where.Length - 5);
-
-            }
-
-            return where;
-
-
-        }
-
-        private static string FilterCondition<TEntity>(DbCommand command, IEnumerable<SearchyCondition> conditions = null)
-        {
-
-
-            var entityType = typeof(TEntity);
-            var searchyCondition = conditions?.FirstOrDefault();
-            string where = "";
-
-            if (searchyCondition != null && searchyCondition.Filters.Count > 0)
-            {
-                where = " WHERE ";
-
-                int index = 0;
-                foreach (var filter in searchyCondition.Filters)
-                {
-                    index += 1;
-                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnName;
-                    var parameter = command.AddCommandParameter(filterColName + index.ToString());
+                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnNameEscaped;
+                    var filterColumnParameter = GetColumnInfo(entityType, filter.Field).ColumnName;
+                    var parameter = command.AddCommandParameter(filterColumnParameter + index.ToString());
 
                     switch (filter.Rule)
                     {
