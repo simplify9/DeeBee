@@ -1,9 +1,12 @@
+
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 using SW.DeeBee.UnitTests.Entities;
 using SW.PrimitiveTypes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SW.DeeBee.UnitTests
@@ -65,48 +68,43 @@ namespace SW.DeeBee.UnitTests
 
             var bag = new Bag
             {
-                Number = "65456456",
-                Description = "test bag",
+                Number = "1",
+                Description = "test bag 1",
                 Entity = "XYZ",
                 SampleDate = DateTime.UtcNow
             };
 
-            //using (var  connectionHost = new ConnectionHost(new DeeBeeOptions()
-            //{
-            //    Provider = typeof(MySqlConnection),
-            //    ConntectionString = "Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;"
-            //    //ConnectionFactory = () => new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;")
-            //}))
-            //{
-
-            //};
-
-
-            using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=dee_bee_tests;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
+            using (var connection = new MySqlConnection(ConnectionString.Value))
             {
                 await connection.OpenAsync();
+                await connection.Delete<Bag>();
+
+
+                await connection.Add(bag);
+                bag.Number = "2";
+                await connection.Add(bag);
+                bag.Number = "3";
                 await connection.Add(bag);
 
-                //bag.Description = "ttt";
+                var bags = await connection.All<Bag>();
 
-                //await connection.Update(bag);
-                var bags = await connection.All<Bag>(req.Conditions, req.Sorts, req.PageSize, req.PageIndex);
-                //  var bag1 = await connection.One<LegacyParcel>(20);
+                Assert.AreEqual(3, bags.Count());
 
-                //var condition = new SearchyCondition();
+                var bagsEither1Or2 = await connection.All<Bag>(new List<SearchyCondition>()
+                {
+                    new SearchyCondition(nameof(Bag.Number), SearchyRule.EqualsTo, "1"),
+                    new SearchyCondition(nameof(Bag.Number), SearchyRule.EqualsTo, "2")
+                });
+                Assert.AreEqual(2, bagsEither1Or2.Count());
 
-                //condition.Filters.Add(new SearchyFilter("Id", SearchyRule.EqualsTo, 1));
-                //condition.Filters.Add(new SearchyFilter("Description", SearchyRule.StartsWith, "f"));
-
-
-                //var selectedBags = await connection.All<Bag>(condition);
+                Assert.IsTrue(bagsEither1Or2.Where(x => x.Number == "3").FirstOrDefault() == null);
 
                 var exceptionCatched = false;
                 try
                 {
                     var data = await connection.All<Bag>(invalidReq.Conditions, invalidReq.Sorts, invalidReq.PageSize, invalidReq.PageIndex);
                 }
-                catch (DeeBeeColumnNameException )
+                catch (DeeBeeColumnNameException)
                 {
                     exceptionCatched = true;
 
@@ -115,8 +113,20 @@ namespace SW.DeeBee.UnitTests
 
                 Assert.IsTrue(exceptionCatched);
 
-                
+
             }
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+

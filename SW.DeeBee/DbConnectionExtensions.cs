@@ -128,6 +128,19 @@ namespace SW.DeeBee
             return connection.All<TEntity>(new SearchyCondition[] { new SearchyCondition(field, rule, value) });
         }
 
+
+        async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
+        {
+            var command = connection.CreateCommandObject();
+            string where = FilterCondition<TEntity>(command, conditions);
+
+            var deleteStatement = $"delete FROM {GetTableInfo(typeof(TEntity)).TableName} {where} ";
+
+            command.CommandText = deleteStatement;
+
+            return await command.ExecuteNonQueryAsync();
+        }
+
         async static public Task<int> Count<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
         {
             var command = connection.CreateCommandObject();
@@ -230,7 +243,7 @@ namespace SW.DeeBee
 
                 for (var propertyIndex = 0; propertyIndex < properties.Length; propertyIndex++)
                 {
-                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnName;
+                    string columnName = GetColumnInfo(properties[propertyIndex]).ColumnNameEscaped;
 
                     if (columnName.Equals(reader.GetName(fieldIndex), StringComparison.OrdinalIgnoreCase))
                     {
@@ -262,15 +275,25 @@ namespace SW.DeeBee
 
 
             var entityType = typeof(TEntity);
-            var searchyCondition = conditions?.FirstOrDefault();
-            string where = "";
 
-            if (searchyCondition != null && searchyCondition.Filters.Count > 0)
+            var where = string.Empty;
+
+            if (conditions == null || conditions.Count() == 0)
+                return "";
+
+
+
+
+
+            int index = 0;
+
+            foreach (var condition in conditions.Where(x => x.Filters != null && x.Filters.Count != 0))
             {
-                where = " WHERE ";
-
-                int index = 0;
-                foreach (var filter in searchyCondition.Filters)
+                if (where == string.Empty)
+                    where = " WHERE (";
+                else
+                    where = $"{where} or ( ";
+                foreach (var filter in condition.Filters)
                 {
                     index += 1;
                     var filterColName = GetColumnInfo(entityType, filter.Field).ColumnNameEscaped;
@@ -348,7 +371,13 @@ namespace SW.DeeBee
 
                 where = where.Remove(where.Length - 5);
 
+                where = $"{where})";
             }
+
+
+
+
+
 
             return where;
 
@@ -358,3 +387,7 @@ namespace SW.DeeBee
         public static string IdentityCommand => "SELECT LAST_INSERT_ID();";
     }
 }
+
+
+
+
