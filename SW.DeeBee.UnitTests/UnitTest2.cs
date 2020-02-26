@@ -8,17 +8,23 @@ using System.Threading.Tasks;
 
 namespace SW.DeeBee.UnitTests
 {
-    [TestClass]
-    public class UnitTest3
+    
+    namespace SW.DeeBee.UnitTests
     {
-
-        [TestMethod]
-        async public Task TestMethod1()
+        [TestClass]
+        public class UnitTest3
         {
 
-            var req = new SearchyRequest()
+
+
+
+            [TestMethod]
+            async public Task TestMethod1()
             {
-                Conditions = new List<SearchyCondition>() {
+
+                var req = new SearchyRequest()
+                {
+                    Conditions = new List<SearchyCondition>() {
                     new SearchyCondition() {
                         Filters = new List<SearchyFilter>() {
                             new SearchyFilter() {
@@ -29,34 +35,35 @@ namespace SW.DeeBee.UnitTests
                         }
                     }
                 },
-                PageIndex = 0,
-                PageSize = 12,
-                Sorts = new List<SearchySort>() {
+                    PageIndex = 0,
+                    PageSize = 12,
+                    Sorts = new List<SearchySort>() {
                     new SearchySort() {
                         Field = "ID", Sort = SearchySortOrder.DEC
                     }
                 }
-            };
+                };
 
 
-            using (var connection = new MySqlConnection(ConnectionString.Value))
-            {
-                await connection.OpenAsync();
-                //await connection.Add(bag);
+                using (var connection = new MySqlConnection(ConnectionString.Value))
+                {
+                    await connection.OpenAsync();
+                    //await connection.Add(bag);
 
-                //bag.Description = "ttt";
+                    //bag.Description = "ttt";
 
-                //await connection.Update(bag);
-                var bags = await connection.Count<LegacyParcel>(req.Conditions);
-                //  var bag1 = await connection.One<LegacyParcel>(20);
+                    //await connection.Update(bag);
+                    var bags = await connection.Count<LegacyParcel>(req.Conditions);
+                    //  var bag1 = await connection.One<LegacyParcel>(20);
 
-                //var condition = new SearchyCondition();
+                    //var condition = new SearchyCondition();
 
-                //condition.Filters.Add(new SearchyFilter("Id", SearchyRule.EqualsTo, 1));
-                //condition.Filters.Add(new SearchyFilter("Description", SearchyRule.StartsWith, "f"));
+                    //condition.Filters.Add(new SearchyFilter("Id", SearchyRule.EqualsTo, 1));
+                    //condition.Filters.Add(new SearchyFilter("Description", SearchyRule.StartsWith, "f"));
 
 
-                //var selectedBags = await connection.All<Bag>(condition);
+                    //var selectedBags = await connection.All<Bag>(condition);
+                }
             }
         }
     }
