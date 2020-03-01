@@ -4,6 +4,18 @@ using System.Text;
 
 namespace SW.DeeBee.UnitTests.Entities
 {
+    [Table("GLN_PQ", null, false)]
+    public class Pq
+    {
+        public int HAWB_ID { get; set; }
+        public string HAWB { get; set; }
+        public DateTime Update_Time { get; set; }
+        public string PQ_Code { get; set; }
+        public string Comment { get; set; }
+        public string UserID { get; set; }
+
+    }
+
     [Table("Bags")]
     class Bag
     {

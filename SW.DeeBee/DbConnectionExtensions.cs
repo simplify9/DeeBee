@@ -26,10 +26,11 @@ namespace SW.DeeBee
 
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase) || !tableInfo.ServerSideIdentity)
                 {
-                    var column = GetColumnInfo(property).ColumnNameEscaped;
-                    fields.Append(column + ", ");
-                    parameters.Append("@" + column + ", ");
-                    command.AddCommandParameter(column, property.GetValue(entity));
+                    var columnEscaped = GetColumnInfo(property).ColumnNameEscaped;
+                    var paramaterName = $"@{GetColumnInfo(property).ColumnName}";
+                    fields.Append(columnEscaped + ", ");
+                    parameters.Append(paramaterName + ", ");
+                    command.AddCommandParameter(paramaterName, property.GetValue(entity));
                 }
                 else
                     idProperty = property;
@@ -37,7 +38,7 @@ namespace SW.DeeBee
             string insertStatement = $"INSERT INTO {tableInfo.TableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(tableInfo.ServerSideIdentity ? ";" + IdentityCommand : "")}";
 
             command.CommandText = insertStatement;
-
+                
             if (tableInfo.ServerSideIdentity)
             {
                 var newId = await command.ExecuteScalarAsync();
@@ -45,35 +46,39 @@ namespace SW.DeeBee
             }
             else
                 await command.ExecuteNonQueryAsync();
-        }
+            }
 
         async public static Task Update<TEntity>(this DbConnection connection, TEntity entity, DbTransaction transaction = null)
         {
             var entityType = typeof(TEntity);
             var properties = entityType.GetProperties();
-            PropertyInfo idProperty = null;
-            string idColumn = string.Empty;
+            
+            var idColumn = string.Empty;
+            var idColumnParameter = string.Empty;
             var fields = new StringBuilder();
             var command = connection.CreateCommandObject(transaction);
             var tableInfo = GetTableInfo(entityType);
 
             foreach (PropertyInfo property in properties)
             {
+                var parameterName = $"@{GetColumnInfo(property).ColumnName}";
                 if (!property.Name.Equals(tableInfo.IdentityColumn, StringComparison.OrdinalIgnoreCase))
                 {
                     string column = GetColumnInfo(property).ColumnNameEscaped;
-                    fields.Append(column + "= " + "@" + column + ", ");
-                    command.AddCommandParameter(column, property.GetValue(entity));
+                    fields.Append(column + "= " + parameterName + ", ");
+                    
                 }
                 else
                 {
-                    idProperty = property;
-                    idColumn = GetColumnInfo(idProperty).ColumnNameEscaped;
-                    command.AddCommandParameter(idColumn, property.GetValue(entity));
+                    idColumnParameter = parameterName;
+                    idColumn = GetColumnInfo(property).ColumnNameEscaped;
+                  
                 }
+
+                command.AddCommandParameter(parameterName, property.GetValue(entity));
             }
 
-            string updateStatement = $"UPDATE {tableInfo.TableName} SET {fields.ToString().Remove(fields.ToString().Length - 2)} WHERE {idColumn}=@{idColumn}";
+            string updateStatement = $"UPDATE {tableInfo.TableName} SET {fields.ToString().Remove(fields.ToString().Length - 2)} WHERE {idColumn}={idColumnParameter}";
             command.CommandText = updateStatement;
 
             await command.ExecuteNonQueryAsync();
