@@ -38,7 +38,7 @@ namespace SW.DeeBee
             string insertStatement = $"INSERT INTO {tableInfo.TableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(tableInfo.ServerSideIdentity ? ";" + IdentityCommand : "")}";
 
             command.CommandText = insertStatement;
-                
+
             if (tableInfo.ServerSideIdentity)
             {
                 var newId = await command.ExecuteScalarAsync();
@@ -46,13 +46,13 @@ namespace SW.DeeBee
             }
             else
                 await command.ExecuteNonQueryAsync();
-            }
+        }
 
         async public static Task Update<TEntity>(this DbConnection connection, TEntity entity, DbTransaction transaction = null)
         {
             var entityType = typeof(TEntity);
             var properties = entityType.GetProperties();
-            
+
             var idColumn = string.Empty;
             var idColumnParameter = string.Empty;
             var fields = new StringBuilder();
@@ -66,13 +66,13 @@ namespace SW.DeeBee
                 {
                     string column = GetColumnInfo(property).ColumnNameEscaped;
                     fields.Append(column + "= " + parameterName + ", ");
-                    
+
                 }
                 else
                 {
                     idColumnParameter = parameterName;
                     idColumn = GetColumnInfo(property).ColumnNameEscaped;
-                  
+
                 }
 
                 command.AddCommandParameter(parameterName, property.GetValue(entity));
@@ -167,6 +167,12 @@ namespace SW.DeeBee
 
         async public static Task<TEntity> One<TEntity>(this DbConnection connection, object key) where TEntity : new()
         {
+            var tableName = GetTableInfo(typeof(TEntity)).TableName;
+            return await connection.One<TEntity>(tableName, key);
+        }
+
+        async public static Task<TEntity> One<TEntity>(this DbConnection connection, string tableName,  object key) where TEntity : new()
+        {
             var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
 
             string selectStatement = $"{BuildSelect<TEntity>()} WHERE {identityColumn}=@{identityColumn}";
@@ -175,7 +181,8 @@ namespace SW.DeeBee
             command.AddCommandParameter(identityColumn, key);
             return (await BindReader<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
         }
-        private static string BuildSelect<TEntity>()
+
+        private static string BuildSelect<TEntity>(string tableName)
         {
             var entityType = typeof(TEntity);
             string fields = "";
