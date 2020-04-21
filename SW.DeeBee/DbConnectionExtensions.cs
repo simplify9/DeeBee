@@ -134,9 +134,9 @@ namespace SW.DeeBee
         }
 
 
-        async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
+        async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null, DbTransaction transaction = null) where TEntity : new()
         {
-            var command = connection.CreateCommandObject();
+            var command = connection.CreateCommandObject(transaction);
             string where = FilterCondition<TEntity>(command, conditions);
 
             var deleteStatement = $"delete FROM {GetTableInfo(typeof(TEntity)).TableName} {where} ";
