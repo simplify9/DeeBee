@@ -71,7 +71,7 @@ namespace SW.DeeBee.UnitTests
                 Number = "1",
                 Description = "test bag 1",
                 Entity = "XYZ",
-                SampleDate = DateTime.UtcNow
+                TS = DateTime.UtcNow,
             };
             //using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=glnetclo;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
             //{
