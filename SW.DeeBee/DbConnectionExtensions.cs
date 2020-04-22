@@ -161,8 +161,12 @@ namespace SW.DeeBee
             return connection.All<TEntity>(tableName, new SearchyCondition[] { new SearchyCondition(field, rule, value) });
         }
 
-
         async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
+        {
+            string tableName = GetTableInfo(typeof(TEntity)).TableName;
+            return await connection.Delete<TEntity>(tableName, conditions);
+        }
+        async static public Task<int> Delete<TEntity>(this DbConnection connection, string tableName, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
         {
             var command = connection.CreateCommandObject();
             string where = FilterCondition<TEntity>(command, conditions);
