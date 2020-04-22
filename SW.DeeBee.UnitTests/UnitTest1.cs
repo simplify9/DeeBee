@@ -91,7 +91,7 @@ namespace SW.DeeBee.UnitTests
             using (var connection = new MySqlConnection(ConnectionString.Value))
             {
                 await connection.OpenAsync();
-                await connection.Delete<Bag>();
+                await connection.Delete<Bag>("Bag");
 
 
                 await connection.Add(bag);
