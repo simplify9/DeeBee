@@ -73,7 +73,21 @@ namespace SW.DeeBee.UnitTests
                 Entity = "XYZ",
                 SampleDate = DateTime.UtcNow
             };
+            //using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=glnetclo;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
+            //{
+            //    await connection.OpenAsync();
+            //    var a = new Pq
+            //    {
+            //        Comment = "",
+            //        HAWB = "1Z47Y19F6890057094",
+            //        HAWB_ID = 274826,
+            //        Update_Time = DateTime.Now,
+            //        PQ_Code = "",
+            //        UserID = ""
+            //    };
 
+            //    await connection.Add(a);
+            //}
             using (var connection = new MySqlConnection(ConnectionString.Value))
             {
                 await connection.OpenAsync();
@@ -98,6 +112,12 @@ namespace SW.DeeBee.UnitTests
                 Assert.AreEqual(2, bagsEither1Or2.Count());
 
                 Assert.IsTrue(bagsEither1Or2.Where(x => x.Number == "3").FirstOrDefault() == null);
+
+
+                bag.Description = "some update";
+
+                await connection.Update(bag);
+
 
                 var exceptionCatched = false;
                 try
