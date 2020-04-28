@@ -133,8 +133,6 @@ namespace SW.DeeBee
             if (pageSize > 0)
                 selectStatement = selectStatement.AddSqlLimit(pageSize, connection.GetType(), pageIndex * pageSize);
 
-            //var TEMPstatement = BuildSelect<TEntity>(tableName, pageIndex * pageSize, connection.GetType()) + $"{where} {orderBy}";
-
             command.CommandText = selectStatement;
 
             return await (await command.ExecuteReaderAsync()).BindReader<TEntity>();
