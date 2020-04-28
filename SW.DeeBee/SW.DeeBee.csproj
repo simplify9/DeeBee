@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.2" />
+    <PackageReference Include="MySql.Data" Version="8.0.19" />
     <PackageReference Include="SimplyWorks.PrimitiveTypes" Version="2020.2.18.1" />
   </ItemGroup>
 

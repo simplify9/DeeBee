@@ -1,4 +1,5 @@
-﻿using SW.PrimitiveTypes;
+﻿using MySql.Data.MySqlClient;
+using SW.PrimitiveTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -130,9 +131,9 @@ namespace SW.DeeBee
             string selectStatement = $"{BuildSelect<TEntity>(tableName)} {where} {orderBy}";
 
             if (pageSize > 0)
+                selectStatement = selectStatement.AddSqlLimit(pageSize, connection.GetType(), pageIndex * pageSize);
 
-                selectStatement = $"{selectStatement} LIMIT {pageIndex * pageSize}, {pageSize}";
-
+            //var TEMPstatement = BuildSelect<TEntity>(tableName, pageIndex * pageSize, connection.GetType()) + $"{where} {orderBy}";
 
             command.CommandText = selectStatement;
 
@@ -223,6 +224,15 @@ namespace SW.DeeBee
                 fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped},";
 
             return $"SELECT {fields.Remove(fields.Length - 1)} FROM {tableName} ";
+        }
+
+        private static string AddSqlLimit(this string sqlStatement, int pageSize, Type sqlProvider, int paging = 0)
+        {
+            if (sqlProvider == typeof(MySqlConnection))
+                sqlStatement += pageSize == 0? $"LIMIT {pageSize}" : $"LIMIT {pageSize}, {paging}";
+            else
+                sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
+            return sqlStatement;
         }
 
         private static Table GetTableInfo(Type entityType)
