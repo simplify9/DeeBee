@@ -1,5 +1,4 @@
-﻿using MySql.Data.MySqlClient;
-using SW.PrimitiveTypes;
+﻿using SW.PrimitiveTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,10 +8,17 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+
+
 namespace SW.DeeBee
 {
+
+
     public static class DbConnectionExtensions
     {
+        private const string MYSQL = "MySqlConnection";
+        private const string MSSQL = "SqlConnection";
+
 
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 
         {
@@ -226,9 +232,10 @@ namespace SW.DeeBee
 
         private static string AddSqlLimit(this string sqlStatement, int pageSize, Type sqlProvider, int paging = 0)
         {
-            if (sqlProvider == typeof(MySqlConnection))
-                sqlStatement += pageSize == 0? $"LIMIT {pageSize}" : $"LIMIT {pageSize}, {paging}";
-            else
+
+            if (sqlProvider.Name == MYSQL)
+                sqlStatement += paging == 0? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
+            else if (sqlProvider.Name == MSSQL)
                 sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
             return sqlStatement;
         }

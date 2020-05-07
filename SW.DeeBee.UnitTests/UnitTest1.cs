@@ -94,15 +94,24 @@ namespace SW.DeeBee.UnitTests
                 await connection.Delete<Bag>("Bags");
 
 
+
                 await connection.Add(bag);
                 bag.Number = "2";
                 await connection.Add(bag);
                 bag.Number = "3";
                 await connection.Add(bag);
 
+                var limitedBags = await connection.All<Bag>("Bags",
+                    new List<SearchyCondition>()
+                        {
+                            new SearchyCondition(nameof(Bag.Number), SearchyRule.EqualsTo, "1"),
+                            new SearchyCondition(nameof(Bag.Number), SearchyRule.EqualsTo, "2")
+                        }, null, 2, 0);
+
                 var bags = await connection.All<Bag>();
 
                 Assert.AreEqual(3, bags.Count());
+                Assert.AreEqual(2, limitedBags.Count());
 
                 var bagsEither1Or2 = await connection.All<Bag>(new List<SearchyCondition>()
                 {
