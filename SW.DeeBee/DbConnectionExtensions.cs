@@ -8,10 +8,17 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+
+
 namespace SW.DeeBee
 {
+
+
     public static class DbConnectionExtensions
     {
+        private const string MYSQL = "MySqlConnection";
+        private const string MSSQL = "SqlConnection";
+
 
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 
         {
@@ -130,9 +137,7 @@ namespace SW.DeeBee
             string selectStatement = $"{BuildSelect<TEntity>(tableName)} {where} {orderBy}";
 
             if (pageSize > 0)
-
-                selectStatement = $"{selectStatement} LIMIT {pageIndex * pageSize}, {pageSize}";
-
+                selectStatement = selectStatement.AddSqlLimit(pageSize, connection.GetType(), pageIndex * pageSize);
 
             command.CommandText = selectStatement;
 
@@ -223,6 +228,16 @@ namespace SW.DeeBee
                 fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped},";
 
             return $"SELECT {fields.Remove(fields.Length - 1)} FROM {tableName} ";
+        }
+
+        private static string AddSqlLimit(this string sqlStatement, int pageSize, Type sqlProvider, int paging = 0)
+        {
+
+            if (sqlProvider.Name == MYSQL)
+                sqlStatement += paging == 0? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
+            else if (sqlProvider.Name == MSSQL)
+                sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
+            return sqlStatement;
         }
 
         private static Table GetTableInfo(Type entityType)
