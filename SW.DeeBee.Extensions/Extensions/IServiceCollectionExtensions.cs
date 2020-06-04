@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SW.DeeBee
+namespace SW.DeeBee.Extensions
 {
     public static class IServiceCollectionExtensions
     {

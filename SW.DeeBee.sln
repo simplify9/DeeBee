@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29721.120
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SW.DeeBee", "SW.DeeBee\SW.DeeBee.csproj", "{18758200-3E3A-4D3E-AD3D-83A10110E99D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SW.DeeBee", "SW.DeeBee\SW.DeeBee.csproj", "{18758200-3E3A-4D3E-AD3D-83A10110E99D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SW.DeeBee.UnitTests", "SW.DeeBee.UnitTests\SW.DeeBee.UnitTests.csproj", "{DA2D37A8-99D0-4C4A-9399-C2E2D91ADEAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SW.DeeBee.UnitTests", "SW.DeeBee.UnitTests\SW.DeeBee.UnitTests.csproj", "{DA2D37A8-99D0-4C4A-9399-C2E2D91ADEAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SW.DeeBee.Extensions", "SW.DeeBee.Extensions\SW.DeeBee.Extensions.csproj", "{43688F72-D8B2-409F-8C85-61CAA43196DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{DA2D37A8-99D0-4C4A-9399-C2E2D91ADEAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA2D37A8-99D0-4C4A-9399-C2E2D91ADEAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA2D37A8-99D0-4C4A-9399-C2E2D91ADEAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43688F72-D8B2-409F-8C85-61CAA43196DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43688F72-D8B2-409F-8C85-61CAA43196DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43688F72-D8B2-409F-8C85-61CAA43196DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43688F72-D8B2-409F-8C85-61CAA43196DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
