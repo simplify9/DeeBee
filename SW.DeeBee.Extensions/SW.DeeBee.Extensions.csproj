@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>SimplyWorks.DeeBee.Extensions</PackageId>
+    <Authors>Simplify9</Authors>
+    <Product>SimplyWorks.DeeBee.Extensions</Product>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

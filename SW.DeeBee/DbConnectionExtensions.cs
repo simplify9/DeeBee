@@ -18,6 +18,7 @@ namespace SW.DeeBee
     {
         private const string MYSQL = "MySqlConnection";
         private const string MSSQL = "SqlConnection";
+        private const string SQLITE = "SqlConnection";
 
 
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 

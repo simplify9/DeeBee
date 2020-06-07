@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
@@ -21,7 +22,7 @@ namespace SW.DeeBee.UnitTests
         {
             services.AddDeeBee(configure => 
             {
-                configure.Provider = typeof(MySqlConnection);
+                configure.Provider = typeof(SqliteConnection);
                 configure.ConntectionString = "Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=mailboxdb;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;";
             }); 
 

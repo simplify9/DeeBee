@@ -24,4 +24,10 @@
     <ProjectReference Include="..\SW.DeeBee.Extensions\SW.DeeBee.Extensions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\TestDb.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
