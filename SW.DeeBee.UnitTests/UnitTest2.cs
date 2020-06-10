@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 using SW.DeeBee.UnitTests.Entities;
@@ -46,7 +45,7 @@ namespace SW.DeeBee.UnitTests
                 };
 
 
-                using (var connection = new SqliteConnection("Data Source=./Data/TestDb.db"))
+                using (var connection = new MySqlConnection(ConnectionString.Value))
                 {
                     await connection.OpenAsync();
                     //await connection.Add(bag);
