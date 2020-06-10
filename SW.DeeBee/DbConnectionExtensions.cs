@@ -179,6 +179,12 @@ namespace SW.DeeBee
             return await command.ExecuteNonQueryAsync();
         }
 
+        async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null, DbTransaction transaction = null) where TEntity : new()
+        {
+            string tableName = GetTableInfo(typeof(TEntity)).TableName;
+            return await connection.Delete<TEntity>(tableName, conditions, transaction);
+        }
+
         async static public Task<int> Count<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
         {
             string tableName = GetTableInfo(typeof(TEntity)).TableName;
