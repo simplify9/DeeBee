@@ -16,9 +16,9 @@ namespace SW.DeeBee
 
     public static class DbConnectionExtensions
     {
-        private const string MYSQL = "MySqlConnection";
-        private const string MSSQL = "SqlConnection";
-        private const string SQLITE = "SqlConnection";
+        private const string MYSQL = "MySql.Data.MySqlClient.MySqlConnection";
+        private const string MSSQL = "System.Data.SqlClient.SqlConnection";
+        private const string SQLITE = "Microsoft.Data.Sqlite.SqliteConnection";
 
 
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 
@@ -39,6 +39,9 @@ namespace SW.DeeBee
                     var paramaterName = $"@{GetColumnInfo(property).ColumnName}";
                     fields.Append(columnEscaped + ", ");
                     parameters.Append(paramaterName + ", ");
+
+                    if (connection.GetType().FullName == SQLITE) paramaterName = paramaterName.Substring(1); 
+
                     command.AddCommandParameter(paramaterName, property.GetValue(entity));
                 }
                 else
@@ -46,14 +49,14 @@ namespace SW.DeeBee
             }
 
 
-            string insertStatement = $"INSERT INTO {tableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(serverSideIdentity ? ";" + IdentityCommand : "")}";
+            string insertStatement = $"INSERT INTO {tableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(serverSideIdentity && connection.GetType().FullName != SQLITE ? ";" + IdentityCommand : "")}";
 
             command.CommandText = insertStatement;
 
             if (serverSideIdentity)
             {
                 var newId = await command.ExecuteScalarAsync();
-                idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
+                //idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
             }
             else
                 await command.ExecuteNonQueryAsync();
@@ -180,6 +183,12 @@ namespace SW.DeeBee
             return await command.ExecuteNonQueryAsync();
         }
 
+        async static public Task<int> Delete<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null, DbTransaction transaction = null) where TEntity : new()
+        {
+            string tableName = GetTableInfo(typeof(TEntity)).TableName;
+            return await connection.Delete<TEntity>(tableName, conditions, transaction);
+        }
+
         async static public Task<int> Count<TEntity>(this DbConnection connection, IEnumerable<SearchyCondition> conditions = null) where TEntity : new()
         {
             string tableName = GetTableInfo(typeof(TEntity)).TableName;
@@ -234,9 +243,9 @@ namespace SW.DeeBee
         private static string AddSqlLimit(this string sqlStatement, int pageSize, Type sqlProvider, int paging = 0)
         {
 
-            if (sqlProvider.Name == MYSQL)
-                sqlStatement += paging == 0? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
-            else if (sqlProvider.Name == MSSQL)
+            if (sqlProvider.FullName == MYSQL || sqlProvider.FullName == SQLITE)
+                sqlStatement += paging == 0 ? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
+            else if (sqlProvider.FullName == MSSQL)
                 sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
             return sqlStatement;
         }
