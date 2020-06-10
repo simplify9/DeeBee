@@ -1,5 +1,6 @@
 
 
+using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 using SW.DeeBee.UnitTests.Entities;
@@ -68,7 +69,7 @@ namespace SW.DeeBee.UnitTests
 
             var bag = new Bag
             {
-                Number = "1",
+                Number = "1a",
                 Description = "test bag 1",
                 Entity = "XYZ",
                 TS = DateTime.UtcNow,
@@ -88,12 +89,10 @@ namespace SW.DeeBee.UnitTests
 
             //    await connection.Add(a);
             //}
-            using (var connection = new MySqlConnection(ConnectionString.Value))
+            using (var connection = new SqliteConnection("Data Source=./Data/TestDb.db"))
             {
                 await connection.OpenAsync();
                 await connection.Delete<Bag>("Bags");
-
-
                 await connection.Add(bag);
                 bag.Number = "2";
                 await connection.Add(bag);
