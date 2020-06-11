@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using SW.ObjectConversion;
 
 
 namespace SW.DeeBee
@@ -80,7 +80,7 @@ namespace SW.DeeBee
 
             foreach (PropertyInfo property in properties)
             {
-                var parameterName = $"@{GetColumnInfo(property).ColumnName}";
+                var parameterName = $"{GetColumnInfo(property).ColumnName}";
                 bool isIdentity = property.Name.Equals(identity, StringComparison.OrdinalIgnoreCase); 
                 if (!isIdentity)
                 {
@@ -326,8 +326,13 @@ namespace SW.DeeBee
 
                 for (var index = 0; index < reader.FieldCount; index++)
                 {
+
                     if (!reader.IsDBNull(index) && propertyMapper.TryGetValue(index, out int propertyIndex))
-                        properties[propertyIndex].SetValue(entity, reader[index], null);
+                        properties[propertyIndex].SetValue(
+                            entity, 
+                            reader[index].ConvertValueToType(properties[propertyIndex].PropertyType), 
+                            null
+                        );
                 }
 
                 list.Add(entity);
@@ -336,6 +341,7 @@ namespace SW.DeeBee
             reader.Close();
             return list;
         }
+
 
         public static string FilterCondition<TEntity>(DbCommand command, IEnumerable<SearchyCondition> conditions = null)
         {
