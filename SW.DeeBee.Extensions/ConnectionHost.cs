@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SW.DeeBee
 {
-    public class ConnectionHost : IDisposable
+    internal class ConnectionHost : IDisposable
     {
         private readonly DeeBeeOptions deeBeeOptions;
         private DbTransaction transaction = null;

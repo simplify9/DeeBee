@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using SW.ObjectConversion;
 
 
 namespace SW.DeeBee
@@ -16,8 +16,9 @@ namespace SW.DeeBee
 
     public static class DbConnectionExtensions
     {
-        private const string MYSQL = "MySqlConnection";
-        private const string MSSQL = "SqlConnection";
+        private const string MYSQL = "MySql.Data.MySqlClient.MySqlConnection";
+        private const string MSSQL = "System.Data.SqlClient.SqlConnection";
+        private const string SQLITE = "Microsoft.Data.Sqlite.SqliteConnection";
 
 
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 
@@ -38,6 +39,9 @@ namespace SW.DeeBee
                     var paramaterName = $"@{GetColumnInfo(property).ColumnName}";
                     fields.Append(columnEscaped + ", ");
                     parameters.Append(paramaterName + ", ");
+
+                    if (connection.GetType().FullName == SQLITE) paramaterName = paramaterName.Substring(1); 
+
                     command.AddCommandParameter(paramaterName, property.GetValue(entity));
                 }
                 else
@@ -45,14 +49,14 @@ namespace SW.DeeBee
             }
 
 
-            string insertStatement = $"INSERT INTO {tableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(serverSideIdentity ? ";" + IdentityCommand : "")}";
+            string insertStatement = $"INSERT INTO {tableName} ({fields.ToString().Remove(fields.ToString().Length - 2)}) VALUES ({parameters.ToString().Remove(parameters.ToString().Length - 2)}) {(serverSideIdentity && connection.GetType().FullName != SQLITE ? ";" + IdentityCommand : "")}";
 
             command.CommandText = insertStatement;
 
             if (serverSideIdentity)
             {
                 var newId = await command.ExecuteScalarAsync();
-                idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
+                //idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
             }
             else
                 await command.ExecuteNonQueryAsync();
@@ -76,7 +80,7 @@ namespace SW.DeeBee
 
             foreach (PropertyInfo property in properties)
             {
-                var parameterName = $"@{GetColumnInfo(property).ColumnName}";
+                var parameterName = $"{GetColumnInfo(property).ColumnName}";
                 bool isIdentity = property.Name.Equals(identity, StringComparison.OrdinalIgnoreCase); 
                 if (!isIdentity)
                 {
@@ -239,9 +243,9 @@ namespace SW.DeeBee
         private static string AddSqlLimit(this string sqlStatement, int pageSize, Type sqlProvider, int paging = 0)
         {
 
-            if (sqlProvider.Name == MYSQL)
-                sqlStatement += paging == 0? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
-            else if (sqlProvider.Name == MSSQL)
+            if (sqlProvider.FullName == MYSQL || sqlProvider.FullName == SQLITE)
+                sqlStatement += paging == 0 ? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
+            else if (sqlProvider.FullName == MSSQL)
                 sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
             return sqlStatement;
         }
@@ -322,8 +326,13 @@ namespace SW.DeeBee
 
                 for (var index = 0; index < reader.FieldCount; index++)
                 {
+
                     if (!reader.IsDBNull(index) && propertyMapper.TryGetValue(index, out int propertyIndex))
-                        properties[propertyIndex].SetValue(entity, reader[index], null);
+                        properties[propertyIndex].SetValue(
+                            entity, 
+                            reader[index].ConvertValueToType(properties[propertyIndex].PropertyType), 
+                            null
+                        );
                 }
 
                 list.Add(entity);
@@ -332,6 +341,7 @@ namespace SW.DeeBee
             reader.Close();
             return list;
         }
+
 
         public static string FilterCondition<TEntity>(DbCommand command, IEnumerable<SearchyCondition> conditions = null)
         {

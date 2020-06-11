@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageId>SimplyWorks.DeeBee</PackageId>
+    <PackageId>SimplyWorks.DeeBee.Extensions</PackageId>
     <Authors>Simplify9</Authors>
-    <Product>SimplyWorks.DeeBee</Product>
+    <Product>SimplyWorks.DeeBee.Extensions</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <PackageProjectUrl>https://github.com/simplify9/DeeBee</PackageProjectUrl>
@@ -12,8 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SimplyWorks.ObjectConversion" Version="2020.6.4.2" />
-    <PackageReference Include="SimplyWorks.PrimitiveTypes" Version="2020.6.3.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SW.DeeBee\SW.DeeBee.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +24,6 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-  </ItemGroup>
+  </ItemGroup>  
 
 </Project>
