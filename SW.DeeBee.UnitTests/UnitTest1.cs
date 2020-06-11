@@ -69,7 +69,7 @@ namespace SW.DeeBee.UnitTests
 
             var bag = new Bag
             {
-                Number = "1a",
+                Number = "1",
                 Description = "test bag 1",
                 Entity = "XYZ",
                 TS = DateTime.UtcNow,
