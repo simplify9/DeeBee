@@ -45,6 +45,29 @@ namespace SW.DeeBee.UnitTests
                 }
             };
 
+
+            var validReq = new SearchyRequest()
+            {
+                Conditions = new List<SearchyCondition>() {
+                    new SearchyCondition() {
+                        Filters = new List<SearchyFilter>() {
+                            new SearchyFilter() {
+                                Field = "Description",
+                                Rule = SearchyRule.Contains,
+                                ValueString = "update"
+                            }
+                        }
+                    }
+                },
+                PageIndex = 0,
+                PageSize = 12,
+                Sorts = new List<SearchySort>() {
+                    new SearchySort() {
+                        Field = "Id", Sort = SearchySortOrder.DEC
+                    }
+                }
+            };
+
             var invalidReq = new SearchyRequest()
             {
                 Conditions = new List<SearchyCondition>() {
@@ -74,21 +97,6 @@ namespace SW.DeeBee.UnitTests
                 Entity = "XYZ",
                 TS = DateTime.UtcNow,
             };
-            //using (var connection = new MySqlConnection("Server=mysql-s9-do-user-6997732-0.db.ondigitalocean.com;Port=25060;Database=glnetclo;User=doadmin;Password=pwpxz6xcmxxq9tlv;sslmode=none;convert zero datetime=True;"))
-            //{
-            //    await connection.OpenAsync();
-            //    var a = new Pq
-            //    {
-            //        Comment = "",
-            //        HAWB = "1Z47Y19F6890057094",
-            //        HAWB_ID = 274826,
-            //        Update_Time = DateTime.Now,
-            //        PQ_Code = "",
-            //        UserID = ""
-            //    };
-
-            //    await connection.Add(a);
-            //}
             using (var connection = new SqliteConnection("Data Source=./Data/TestDb.db"))
             {
                 await connection.OpenAsync();
@@ -118,6 +126,7 @@ namespace SW.DeeBee.UnitTests
                 await connection.Update(bag);
 
 
+                var validData = await connection.All<Bag>(validReq.Conditions, validReq.Sorts, validReq.PageSize, validReq.PageIndex);
                 var exceptionCatched = false;
                 try
                 {
