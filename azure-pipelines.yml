@@ -37,6 +37,7 @@ steps:
     projects: '**/*Tests/*.csproj'
 
 - task: DotNetCoreCLI@2
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
   displayName: 'dotnet pack'
   inputs:
     command: pack
