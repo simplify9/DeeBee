@@ -132,7 +132,7 @@ namespace SW.DeeBee
                 orderBy = " ORDER BY ";
                 foreach (var sort in sorts)
                     if (sort.Sort == SearchySortOrder.DEC)
-                        orderBy += string.Format(" {0} {1},", sort.Field, "DESC");
+                        orderBy += string.Format(" {0} {1},", sort.Field, "DESC ");
                     else
                         orderBy += string.Format(" {0},", sort.Field);
                 orderBy = orderBy.Remove(orderBy.Length - 1);
