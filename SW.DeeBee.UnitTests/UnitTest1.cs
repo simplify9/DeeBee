@@ -63,7 +63,7 @@ namespace SW.DeeBee.UnitTests
                 PageSize = 12,
                 Sorts = new List<SearchySort>() {
                     new SearchySort() {
-                        Field = "Id", Sort = SearchySortOrder.DEC
+                        Field = "Id", Sort = SearchySortOrder.ASC
                     }
                 }
             };
@@ -85,7 +85,7 @@ namespace SW.DeeBee.UnitTests
                 PageSize = 12,
                 Sorts = new List<SearchySort>() {
                     new SearchySort() {
-                        Field = "ID", Sort = SearchySortOrder.DEC
+                        Field = "ID", Sort = SearchySortOrder.ASC
                     }
                 }
             };

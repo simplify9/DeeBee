@@ -134,7 +134,7 @@ namespace SW.DeeBee
                     if (sort.Sort == SearchySortOrder.DEC)
                         orderBy += string.Format(" {0} {1},", sort.Field, "DESC ");
                     else
-                        orderBy += string.Format(" {0},", sort.Field);
+                        orderBy += string.Format(" {0} {1},", sort.Field, "ASC");
                 orderBy = orderBy.Remove(orderBy.Length - 1);
             }
 
@@ -244,7 +244,7 @@ namespace SW.DeeBee
         {
 
             if (sqlProvider.FullName == MYSQL || sqlProvider.FullName == SQLITE)
-                sqlStatement += paging == 0 ? $"LIMIT {pageSize}" : $"LIMIT {paging}, {pageSize}";
+                sqlStatement += paging == 0 ? $" LIMIT {pageSize}" : $" LIMIT {paging}, {pageSize}";
             else if (sqlProvider.FullName == MSSQL)
                 sqlStatement = sqlStatement.Insert(7, $"TOP ({pageSize}) ");
             return sqlStatement;
