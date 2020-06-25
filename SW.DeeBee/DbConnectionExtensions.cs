@@ -33,12 +33,26 @@ namespace SW.DeeBee
             return tmp;
         }
 
+        public static async Task<bool> TableExists(this DbConnection con, string tableName)
+        {
+            var command = con.CreateCommand();
+            command.CommandText =
+                $@"SELECT * 
+                FROM information_schema.tables
+                WHERE table_schema = '{con.Database}'
+                AND table_name = '{tableName}'
+                LIMIT 1;";
+            var reader = command.ExecuteReader();
+            if (reader.GetInt32(0) > 0) return true;
+            return false;
+        }
+
         /// <summary>
         /// Creates table on connection object and returns the create statement used
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="tableName"></param>
-        /// <param name="sqlMaps"></param>
+        /// <param name="sqlMaps">Dictionary mapping name of column and its type</param>
         /// <param name="transaction"></param>
         /// <returns></returns>
         public async static Task<string> CreateTable(this DbConnection connection, string tableName, IDictionary<string, SqlTypeInformation> sqlMaps, DbTransaction transaction = null)
