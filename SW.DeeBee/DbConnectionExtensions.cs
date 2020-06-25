@@ -20,7 +20,55 @@ namespace SW.DeeBee
         private const string MSSQL = "System.Data.SqlClient.SqlConnection";
         private const string SQLITE = "Microsoft.Data.Sqlite.SqliteConnection";
 
+        private static string Column(KeyValuePair<string, SqlTypeInformation> map)
+        {
+            string tmp = string.Empty;
 
+            //TODO : implement provider specific UNIQUE implementation
+            if (map.Value.IsUnique)
+                tmp += string.Empty;
+
+            tmp += $"\t{map.Key}\t{map.Value.SqlType},\n";
+
+            return tmp;
+        }
+
+        /// <summary>
+        /// Creates table on connection object and returns the create statement used
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="tableName"></param>
+        /// <param name="sqlMaps"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        public async static Task<string> CreateTable(this DbConnection connection, string tableName, IDictionary<string, SqlTypeInformation> sqlMaps, DbTransaction transaction = null)
+        {
+            string sqlCreate = $"CREATE TABLE {tableName} (\n";
+            foreach (var map in sqlMaps)
+                sqlCreate += Column(map);
+
+            sqlCreate = sqlCreate.Substring(0, sqlCreate.Length - 2) + "\n)\n";
+
+            var command = connection.CreateCommandObject(transaction);
+            command.CommandText = sqlCreate;
+            await command.ExecuteNonQueryAsync();
+            return sqlCreate;
+        }
+
+        public async static Task DropTable(this DbConnection connection, string tableName, DbTransaction transaction = null)
+        {
+            var command = connection.CreateCommandObject(transaction);
+            command.CommandText = $"DROP TABLE {tableName}";
+            await command.ExecuteNonQueryAsync();
+        }
+
+
+        /// <summary>
+        /// Creates a table using provided fields
+        /// </summary>
+        /// <param name="tableName">Name of the table</param>
+        /// <param name="fields">Field name, field type</param>
+        /// <returns></returns>
         async public static Task Add<TEntity>(this DbConnection connection, string tableName, TEntity entity, string identity = "Id", bool serverSideIdentity = true, DbTransaction transaction = null) 
         {
             var entityType = typeof(TEntity);

@@ -17,6 +17,36 @@ namespace SW.DeeBee.UnitTests
     {
 
 
+        [TestMethod]
+        async public Task TableCreation()
+         {
+
+            using (var connection = new SqliteConnection("Data Source=./Data/TestDb.db"))
+            {
+                await connection.OpenAsync();
+                string validCreate = "CREATE TABLE TestSql (\n\tparcel_id\tSTRING,\n\tparcel_location\tSTRING,\n\tparcel_count\tINTEGER\n)\n";
+                string testCreate = await connection.CreateTable("TestSql", new Dictionary<string, SqlTypeInformation>
+                {
+                    ["parcel_id"] = new SqlTypeInformation
+                    {
+                        SqlType = "STRING"
+                    },
+                    ["parcel_location"] = new SqlTypeInformation
+                    {
+                        SqlType = "STRING"
+                    },
+                    ["parcel_count"] = new SqlTypeInformation
+                    {
+                        SqlType = "INTEGER"
+                    },
+                });
+                Assert.AreEqual(validCreate, testCreate);
+                await connection.DropTable("TestSql");
+
+            }
+
+
+        }
 
 
         [TestMethod]
@@ -140,7 +170,6 @@ namespace SW.DeeBee.UnitTests
                 }
 
                 Assert.IsTrue(exceptionCatched);
-
 
             }
         }
