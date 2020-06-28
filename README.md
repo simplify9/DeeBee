@@ -11,7 +11,7 @@
 ## Introduction 
 *DeeBee* is a library providing Object Relational Mapping (ORM) support to applications, libraries, and frameworks. 
 
-*DeeBee* specializes in abstracting away from the tedious process of writing in SQL for managing your databases. These abstractions are provided by extension methods over the [DbContext Class](https://docs.microsoft.com/en-us/dotnet/api/system.data.entity.dbcontext?view=entity-framework-6.2.0), making *DeeBee* the perfect tool to use for projects with basic CRUD requirements. It does not require much ceremony and set up to start using!
+*DeeBee* specializes in abstracting away from the chore of writing in SQL for database management processes. These abstractions are provided by extension methods over the [DbContext Class](https://docs.microsoft.com/en-us/dotnet/api/system.data.entity.dbcontext?view=entity-framework-6.2.0), making *DeeBee* the ideal tool to use for projects with basic CRUD requirements. It does not require much ceremony and set up to start using!
 
 
 ## Installation 
@@ -24,10 +24,46 @@ While the other is used to integrate it into the dependency injection, with:
 dotnet add package SimplyWorks.DeeBee.Extensions
 ```
 
-## Getting Started 
-
 
 ## Examples
+The following examples show *DeeBee* in action. 
+
+// Getting a single record from database
+```var parcels = await db.SingleOrDefault<Parcel>(
+    new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.Id),
+    SearchyRule.EqualsTo, Id) });
+```
+
+// Getting "all" (max 1000) records from database
+``` var parcels = await db.All<Parcel>(
+    new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.ItemCount),
+    SearchyRule.GreaterThan, 2) });
+```
+
+```namespace Project.Resources.Suppliers
+{
+    public class Search : ISearchyHandler
+    {
+        private readonly DbContext db;
+
+        public Search(DbContext db)
+        {
+            this.db = db;
+        }
+        // Interacts smoothly with searchyRequest from primitive types & CqApi handlers
+        async public Task<object> Handle(SearchyRequest searchyRequest, bool lookup = true, string searchPhrase = null)
+        {
+
+            var results = await db.All<Agent>(
+               searchyRequest.Conditions,
+               searchyRequest.Sorts)
+            });
+
+            return results;
+        }
+    }
+}
+```
 
 
 ## Getting support 👷
