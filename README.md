@@ -28,19 +28,22 @@ dotnet add package SimplyWorks.DeeBee.Extensions
 ## Examples
 The following examples show *DeeBee* in action. 
 
-// Getting a single record from database
-```var parcels = await db.SingleOrDefault<Parcel>(
+```csharp
+//Getting a single record from database
+    var parcels = await db.SingleOrDefault<Parcel>(
     new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.Id),
     SearchyRule.EqualsTo, Id) });
 ```
 
+```csharp
 // Getting "all" (max 1000) records from database
-``` var parcels = await db.All<Parcel>(
+    var parcels = await db.All<Parcel>(
     new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.ItemCount),
     SearchyRule.GreaterThan, 2) });
 ```
 
-```namespace Project.Resources.Suppliers
+```chsharp
+namespace Project.Resources.Suppliers
 {
     public class Search : ISearchyHandler
     {
