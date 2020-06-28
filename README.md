@@ -42,7 +42,7 @@ The following examples show *DeeBee* in action.
     SearchyRule.GreaterThan, 2) });
 ```
 
-```chsharp
+```csharp
 namespace Project.Resources.Suppliers
 {
     public class Search : ISearchyHandler
