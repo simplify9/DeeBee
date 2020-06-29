@@ -1,20 +1,73 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+[![Build Status](https://dev.azure.com/simplify9/Github%20Pipelines/_apis/build/status/simplify9.DeeBee?branchName=master)](https://dev.azure.com/simplify9/Github%20Pipelines/_build/latest?definitionId=168&branchName=master) 
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+![Azure DevOps tests](https://img.shields.io/azure-devops/tests/Simplify9/Github%20Pipelines/168?style=for-the-badge)
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+| **Package**       | **Version** |
+| :----------------:|:----------------------:|
+|```SimplyWorks.DeeBee```| ![Nuget](https://img.shields.io/nuget/v/SimplyWorks.DeeBee?style=for-the-badge)
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+
+## Introduction 
+*DeeBee* is a library providing Object Relational Mapping (ORM) support to applications, libraries, and frameworks. 
+
+*DeeBee* specializes in abstracting away from the chore of writing in SQL for database management processes. These abstractions are provided by extension methods over the [DbContext Class](https://docs.microsoft.com/en-us/dotnet/api/system.data.entity.dbcontext?view=entity-framework-6.2.0), making *DeeBee* the ideal tool to use for projects with basic CRUD requirements. It does not require much ceremony and set up to start using!
+
+
+## Installation 
+There are two [NuGet](https://www.nuget.org/packages/SimplyWorks.DeeBee/) packages for *DeeBee*, one being for the service, installed with:
+```csharp
+dotnet add package SimplyWorks.DeeBee 
+```
+While the other is used to integrate it into the dependency injection, with: 
+```csharp
+dotnet add package SimplyWorks.DeeBee.Extensions
+```
+
+
+## Examples
+The following examples show *DeeBee* in action. 
+
+```csharp
+//Getting a single record from database
+    var parcels = await db.SingleOrDefault<Parcel>(
+    new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.Id),
+    SearchyRule.EqualsTo, Id) });
+```
+
+```csharp
+// Getting "all" (max 1000) records from database
+    var parcels = await db.All<Parcel>(
+    new List<SearchyCondition> { new SearchyCondition(nameof(Parcel.ItemCount),
+    SearchyRule.GreaterThan, 2) });
+```
+
+```csharp
+namespace Project.Resources.Suppliers
+{
+    public class Search : ISearchyHandler
+    {
+        private readonly DbContext db;
+
+        public Search(DbContext db)
+        {
+            this.db = db;
+        }
+        // Interacts smoothly with searchyRequest from primitive types & CqApi handlers
+        async public Task<object> Handle(SearchyRequest searchyRequest, bool lookup = true, string searchPhrase = null)
+        {
+
+            var results = await db.All<Agent>(
+               searchyRequest.Conditions,
+               searchyRequest.Sorts)
+            });
+
+            return results;
+        }
+    }
+}
+```
+
+
+## Getting support 👷
+If you encounter any bugs, don't hesitate to submit an [issue](https://github.com/simplify9/DeeBee/issues). We'll get back to you promptly!
