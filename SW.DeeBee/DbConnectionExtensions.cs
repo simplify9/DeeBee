@@ -1,4 +1,5 @@
-﻿using SW.PrimitiveTypes;
+﻿using SW.ObjectConversion;
+using SW.PrimitiveTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SW.ObjectConversion;
+
 
 
 namespace SW.DeeBee
@@ -16,9 +17,12 @@ namespace SW.DeeBee
 
     public static class DbConnectionExtensions
     {
-        private const string MYSQL = "MySql.Data.MySqlClient.MySqlConnection";
-        private const string MSSQL = "System.Data.SqlClient.SqlConnection";
-        private const string SQLITE = "Microsoft.Data.Sqlite.SqliteConnection";
+        private static string SqlProviderName(this DbConnection connection) => connection.GetType().FullName;
+        
+    
+        internal const string MYSQL = "MySql.Data.MySqlClient.MySqlConnection";
+        internal const string MSSQL = "System.Data.SqlClient.SqlConnection";
+        internal const string SQLITE = "Microsoft.Data.Sqlite.SqliteConnection";
 
         private static string Column(KeyValuePair<string, SqlTypeInformation> map)
         {
@@ -83,7 +87,7 @@ namespace SW.DeeBee
                 bool isIdentity = property.Name.Equals(identity, StringComparison.OrdinalIgnoreCase); 
                 if (!isIdentity || !serverSideIdentity)
                 {
-                    var columnEscaped = GetColumnInfo(property).ColumnNameEscaped;
+                    var columnEscaped = GetColumnInfo(property).ColumnNameEscaped(connection.SqlProviderName());
                     var paramaterName = $"@{GetColumnInfo(property).ColumnName}";
                     fields.Append(columnEscaped + ", ");
                     parameters.Append(paramaterName + ", ");
@@ -132,14 +136,14 @@ namespace SW.DeeBee
                 bool isIdentity = property.Name.Equals(identity, StringComparison.OrdinalIgnoreCase); 
                 if (!isIdentity)
                 {
-                    string column = GetColumnInfo(property).ColumnNameEscaped;
+                    string column = GetColumnInfo(property).ColumnNameEscaped(connection.SqlProviderName());
                     fields.Append(column + "= " + parameterName + ", ");
 
                 }
                 else
                 {
                     idColumnParameter = parameterName;
-                    idColumn = GetColumnInfo(property).ColumnNameEscaped;
+                    idColumn = GetColumnInfo(property).ColumnNameEscaped(connection.SqlProviderName());
 
                 }
 
@@ -186,7 +190,7 @@ namespace SW.DeeBee
                 orderBy = orderBy.Remove(orderBy.Length - 1);
             }
 
-            string selectStatement = $"{BuildSelect<TEntity>(tableName)} {where} {orderBy}";
+            string selectStatement = $"{BuildSelect<TEntity>(tableName,connection)} {where} {orderBy}";
 
             if (pageSize > 0)
                 selectStatement = selectStatement.AddSqlLimit(pageSize, connection.GetType(), pageIndex * pageSize);
@@ -269,21 +273,21 @@ namespace SW.DeeBee
         async public static Task<TEntity> One<TEntity>(this DbConnection connection, string tableName,  object key) where TEntity : new()
         {
             var identityColumn = GetTableInfo(typeof(TEntity)).IdentityColumn;
-            string selectStatement = $"{BuildSelect<TEntity>(tableName)} WHERE {identityColumn}=@{identityColumn}";
+            string selectStatement = $"{BuildSelect<TEntity>(tableName,connection)} WHERE {identityColumn}=@{identityColumn}";
             var command = connection.CreateCommandObject();
             command.CommandText = selectStatement;
             command.AddCommandParameter(identityColumn, key);
             return (await BindReader<TEntity>(await command.ExecuteReaderAsync())).SingleOrDefault();
         }
 
-        private static string BuildSelect<TEntity>(string tableName)
+        private static string BuildSelect<TEntity>(string tableName , DbConnection connection)
         {
             var entityType = typeof(TEntity);
             string fields = "";
 
             foreach (var property in entityType.GetProperties())
 
-                fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped},";
+                fields = @$"{fields}{GetColumnInfo(property).ColumnNameEscaped(connection.SqlProviderName())},";
 
             return $"SELECT {fields.Remove(fields.Length - 1)} FROM {tableName} ";
         }
@@ -417,7 +421,7 @@ namespace SW.DeeBee
                 foreach (var filter in condition.Filters)
                 {
                     index += 1;
-                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnNameEscaped;
+                    var filterColName = GetColumnInfo(entityType, filter.Field).ColumnNameEscaped(command.Connection.SqlProviderName());
                     var filterColumnParameter = GetColumnInfo(entityType, filter.Field).ColumnName;
                     var parameter = command.AddCommandParameter(filterColumnParameter + index.ToString());
 
