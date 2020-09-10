@@ -137,7 +137,7 @@ namespace SW.DeeBee
                 if (!isIdentity)
                 {
                     string column = GetColumnInfo(property).ColumnNameEscaped(connection.SqlProviderName());
-                    fields.Append(column + "= " + parameterName + ", ");
+                    fields.Append(column + "= @" + parameterName + ", ");
 
                 }
                 else
@@ -150,7 +150,7 @@ namespace SW.DeeBee
                 command.AddCommandParameter(parameterName, property.GetValue(entity));
             }
 
-            string updateStatement = $"UPDATE {tableName} SET {fields.ToString().Remove(fields.ToString().Length - 2)} WHERE {idColumn}={idColumnParameter}";
+            string updateStatement = $"UPDATE {tableName} SET {fields.ToString().Remove(fields.ToString().Length - 2)} WHERE {idColumn}=@{idColumnParameter}";
             command.CommandText = updateStatement;
 
             await command.ExecuteNonQueryAsync();
