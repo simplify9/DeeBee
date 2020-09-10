@@ -155,7 +155,7 @@ namespace SW.DeeBee.UnitTests
 
                 await connection.Update(bag);
 
-                
+
                 var validData = await connection.All<Bag>(validReq.Conditions, validReq.Sorts, validReq.PageSize, validReq.PageIndex);
                 var exceptionCatched = false;
                 try
