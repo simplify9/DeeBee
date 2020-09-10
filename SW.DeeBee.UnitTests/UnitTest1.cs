@@ -154,9 +154,6 @@ namespace SW.DeeBee.UnitTests
                 bag.Description = "some update";
 
                 await connection.Update(bag);
-                
-                var updatedBag = (await connection.All<Bag>(new SearchyCondition("Number", SearchyRule.EqualsTo, 3))).FirstOrDefault();
-                
 
                 var validData = await connection.All<Bag>(validReq.Conditions, validReq.Sorts, validReq.PageSize, validReq.PageIndex);
                 var exceptionCatched = false;
