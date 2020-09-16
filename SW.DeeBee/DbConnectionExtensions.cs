@@ -108,7 +108,9 @@ namespace SW.DeeBee
             if (serverSideIdentity)
             {
                 var newId = await command.ExecuteScalarAsync();
-                //idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
+             
+                if(newId != null)
+                    idProperty.SetValue(entity, Convert.ChangeType(newId, idProperty.PropertyType));
             }
             else
                 await command.ExecuteNonQueryAsync();
